@@ -1,8 +1,10 @@
-import config
+import config, utils
 from telebot import TeleBot
+from pb_service import PBService
 
 # init bot by token from config
 bot = TeleBot(config.TOKEN)
+pb_service = PBService()
 
 
 # handle /start
@@ -21,6 +23,16 @@ def help_command(message):
         chat_id=message.chat.id,
         text='Ok. Here is help to you:\n\n' +
              '/exchange - show currencies list. Then click on currency code to see exchange.'
+    )
+
+
+# handle /exchange
+@bot.message_handler(commands=['exchange'])
+def exchange_command(message):
+    bot.send_message(
+        chat_id=message.chat.id,
+        text='Here are available exchanges. Select one of them:',
+        reply_markup=utils.get_exchanges_keyboard(pb_service.get_exchanges())
     )
 
 

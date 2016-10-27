@@ -14,5 +14,15 @@ def start_command(message):
     )
 
 
+# handle /help
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    bot.send_message(
+        chat_id=message.chat.id,
+        text='Ok. Here is help to you:\n\n' +
+             '/exchange - show currencies list. Then click on currency code to see exchange.'
+    )
+
+
 # use long poll non-stop
 bot.polling(none_stop=True)

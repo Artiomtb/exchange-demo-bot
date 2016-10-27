@@ -56,7 +56,7 @@ def choose_exchange_callback(query):
         chat_id=chat_id,
         text=utils.get_exchange_text(currency_result),
         parse_mode='HTML',
-        reply_markup=utils.get_exchange_update_keyboard(chosen_currency)
+        reply_markup=utils.get_exchange_update_keyboard(currency_result)
     )
 
 
@@ -68,16 +68,17 @@ def update_exchange_callback(query):
     bot.answer_callback_query(query.id)
 
     # get currency from callback data and fetch actual information
-    currency = json.loads(query.data)['c']
+    callback_data = json.loads(query.data)
+    currency = callback_data['c']
     updated_data = pb_service.get_exchange_by_currency(currency)
 
     # edit old message
     bot.edit_message_text(
         chat_id=query.message.chat.id,
         message_id=query.message.message_id,
-        text=utils.get_exchange_text(updated_data, update=True),
+        text=utils.get_exchange_text(updated_data, old_exchange_data=callback_data),
         parse_mode='HTML',
-        reply_markup=utils.get_exchange_update_keyboard(currency)
+        reply_markup=utils.get_exchange_update_keyboard(updated_data)
     )
 
 

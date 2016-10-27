@@ -1,4 +1,5 @@
 import config, utils
+import json
 from telebot import TeleBot
 from pb_service import PBService
 
@@ -36,11 +37,11 @@ def exchange_command(message):
     )
 
 
-# handle all callback queries with data starts with 'ex-'
-@bot.callback_query_handler(func=lambda query: query.data.startswith('ex-'))
+# handle all callback queries with "exchanges" action
+@bot.callback_query_handler(func=lambda query: json.loads(query.data)['a'] == 'ex')
 def choose_exchange_callback(query):
     # get chosen currency from callback query (ex-<currency>)
-    chosen_currency = query.data[3:]
+    chosen_currency = json.loads(query.data)['c']
 
     chat_id = query.message.chat.id
 
@@ -51,13 +52,32 @@ def choose_exchange_callback(query):
     # get data from pb_service by chosen currency
     currency_result = pb_service.get_exchange_by_currency(chosen_currency)
 
-    base_currency = currency_result['base_ccy']
     bot.send_message(
         chat_id=chat_id,
-        text='<i>Currency exchange for ' + currency_result['ccy'] + ':</i>\n\n' +
-             '<b>Buy:</b> ' + currency_result['buy'] + ' ' + base_currency + '\n' +
-             '<b>Sale:</b> ' + currency_result['sale'] + ' ' + base_currency,
-        parse_mode='HTML'
+        text=utils.get_exchange_text(currency_result),
+        parse_mode='HTML',
+        reply_markup=utils.get_exchange_update_keyboard(chosen_currency)
+    )
+
+
+# handle all callback queries with "update" action
+@bot.callback_query_handler(func=lambda query: json.loads(query.data)['a'] == 'u')
+def update_exchange_callback(query):
+
+    # disables 'loading' state
+    bot.answer_callback_query(query.id)
+
+    # get currency from callback data and fetch actual information
+    currency = json.loads(query.data)['c']
+    updated_data = pb_service.get_exchange_by_currency(currency)
+
+    # edit old message
+    bot.edit_message_text(
+        chat_id=query.message.chat.id,
+        message_id=query.message.message_id,
+        text=utils.get_exchange_text(updated_data, update=True),
+        parse_mode='HTML',
+        reply_markup=utils.get_exchange_update_keyboard(currency)
     )
 
 
